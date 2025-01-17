@@ -7,6 +7,8 @@ import AuthButton from "@/components/auth-button/AuthButton";
 import { ButtonGroup } from "@/components/ui/button";
 import { Box } from "@/components/ui/box";
 import FormRegister from "@/components/form-register/FormRegister";
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
 
 const authState: AuthState = {
   username: "",
@@ -70,13 +72,34 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 export default function Index() {
   const [state, dispatch] = useReducer(authReducer, authState);
   const [isRegistering, setIsRegistering] = useState(false);
+  const { mutate: createUser } = useMutation({
+    mutationFn: async () => {
+      const registerNewUser = await axios.post(
+        `${process.env.EXPO_PUBLIC_API_URL}/user/create`,
+        state
+      );
+      return registerNewUser.data;
+    },
+  });
+  const { mutate: authUser } = useMutation({
+    mutationFn: async () => {
+      const registerNewUser = await axios.post(
+        `${process.env.EXPO_PUBLIC_API_URL}/login`,
+        {
+          username: state.username,
+          password: state.password,
+        }
+      );
+      return registerNewUser.data;
+    },
+  });
 
   const handleSubmitPress = (): void => {
-    console.log(state);
+    createUser();
   };
 
   const handleLoginPress = (): void => {
-    console.log(state);
+    authUser();
   };
 
   const handleCancelPress = () => {
