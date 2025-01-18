@@ -7,6 +7,16 @@ export type AuthState = {
   phoneNumber: string;
 };
 
+export type AuthUserType = {
+  _id: string;
+  username: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+};
+
 export type AuthAction =
   | { type: "username"; payload: string }
   | { type: "password"; payload: string }
@@ -14,7 +24,8 @@ export type AuthAction =
   | { type: "lastName"; payload: string }
   | { type: "email"; payload: string }
   | { type: "phoneNumber"; payload: string }
-  | { type: "resetState" };
+  | { type: "resetState" }
+  | { type: "authState"; payload: AuthUserType };
 
 export type FormInputPropType = {
   labelName: string;

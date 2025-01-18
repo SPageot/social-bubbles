@@ -1,87 +1,70 @@
-import React, { useReducer, useState } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 import { SafeAreaView } from "react-native";
 import { Heading } from "@/components/ui/heading";
-import { AuthAction, AuthState } from "@/types/types";
 import FormLogin from "@/components/form-login/FormLogin";
 import AuthButton from "@/components/auth-button/AuthButton";
 import { ButtonGroup } from "@/components/ui/button";
 import { Box } from "@/components/ui/box";
 import FormRegister from "@/components/form-register/FormRegister";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
-
-const authState: AuthState = {
-  username: "",
-  password: "",
-  firstName: "",
-  lastName: "",
-  email: "",
-  phoneNumber: "",
-};
-
-const authReducer = (state: AuthState, action: AuthAction): AuthState => {
-  switch (action.type) {
-    case "username":
-      return {
-        ...state,
-        username: action.payload,
-      };
-    case "password":
-      return {
-        ...state,
-        password: action.payload,
-      };
-
-    case "firstName":
-      return {
-        ...state,
-        firstName: action.payload,
-      };
-
-    case "lastName":
-      return {
-        ...state,
-        lastName: action.payload,
-      };
-
-    case "email":
-      return {
-        ...state,
-        email: action.payload,
-      };
-
-    case "phoneNumber":
-      return {
-        ...state,
-        phoneNumber: action.payload,
-      };
-    case "resetState":
-      return {
-        username: "",
-        password: "",
-        firstName: "",
-        lastName: "",
-        email: "",
-        phoneNumber: "",
-      };
-    default:
-      return state;
-  }
-};
+import { useToast } from "expo-toast";
+import axios, { AxiosError } from "axios";
+import { authReducer } from "@/reducers/userReducer";
+import { authState } from "@/state/userState";
+import { router } from "expo-router";
 
 export default function Index() {
+  const toast = useToast();
   const [state, dispatch] = useReducer(authReducer, authState);
   const [isRegistering, setIsRegistering] = useState(false);
-  const { mutate: createUser } = useMutation({
+  const { mutate: createUser, data: newUserData } = useMutation({
+    onError: (error) => {
+      if (error instanceof AxiosError) {
+        if (error.response) {
+          if (error.response.data.detail) {
+            toast.show(error.response.data.detail, {
+              duration: 5000,
+            });
+          } else {
+            toast.show(error.response.data.error, {
+              duration: 5000,
+            });
+          }
+        } else {
+          toast.show(error.message, {
+            duration: 5000,
+          });
+        }
+      }
+    },
     mutationFn: async () => {
       const registerNewUser = await axios.post(
-        `${process.env.EXPO_PUBLIC_API_URL}/user/create`,
+        `${process.env.EXPO_PUBLIC_API_URL}/register`,
         state
       );
       return registerNewUser.data;
     },
   });
-  const { mutate: authUser } = useMutation({
+  const { mutate: authUser, data: authUserData } = useMutation({
+    onError: (error) => {
+      if (error instanceof AxiosError) {
+        if (error.response) {
+          if (error.response.data.detail) {
+            toast.show(error.response.data.detail, {
+              duration: 5000,
+            });
+          } else {
+            toast.show(error.response.data.error, {
+              duration: 5000,
+            });
+          }
+        } else {
+          toast.show(error.message, {
+            duration: 5000,
+          });
+        }
+      }
+    },
     mutationFn: async () => {
       const registerNewUser = await axios.post(
         `${process.env.EXPO_PUBLIC_API_URL}/login`,
@@ -93,6 +76,21 @@ export default function Index() {
       return registerNewUser.data;
     },
   });
+
+  useEffect(() => {
+    if (newUserData) {
+      dispatch({ type: "resetState" });
+      setIsRegistering(false);
+      toast.show(newUserData, {
+        duration: 5000,
+      });
+    }
+
+    if (authUserData) {
+      dispatch({ type: "authState", payload: authUserData });
+      router.push("/Dashboard");
+    }
+  }, [newUserData, authUserData]);
 
   const handleSubmitPress = (): void => {
     createUser();
